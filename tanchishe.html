@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html style="height: 100%;"  ondblclick="stop()">
+
+	<head>
+		<meta charset="utf-8" />
+		<!--<meta name="viewport" content="target-densitydpi=320,width=900,user-scalable=no">-->
+		<title>贪吃蛇2018</title>
+		<script type="text/javascript">
+			var cvs; //画布
+			var tou = {
+				x: 0,
+				y: 10,
+				fx: "right"
+			}; //蛇头
+			var touFx = "right"; //蛇头方向，用来同步
+			var st = []; //蛇身体
+			var shiwu = {
+				x: 10,
+				y: 10
+			}; //食物
+			var zt = null; //游戏 暂停/开始/初始化
+			var timer; //计时器
+			var f; //分数
+			var shudu=1;
+			window.onload = function() {
+				cvs = document.querySelector("canvas").getContext('2d');
+				//页面加载完先画一次
+				hz();
+				//这个是闭包，你可以不用管，用来设置难度按钮的切换的
+				var nd=document.querySelectorAll("input");
+			for(var i=0; i<nd.length; i++){
+				nd[i].onclick=function(){
+				document.querySelectorAll(".nd input")[0].className="";
+				document.querySelectorAll(".nd input")[1].className="";
+				document.querySelectorAll(".nd input")[2].className="";
+				this.className="on";
+			};}
+			}
+			//这个方法负责画
+			function hz(chi) {
+				//画背景
+				cvs.fillStyle = "#6B9068";
+				cvs.fillRect(0, 0, 630, 630);
+				//画蛇头
+				if(!chi) {
+					cvs.fillStyle = "#DCDCA7";
+					cvs.fillRect(tou.x * 31 + 5, tou.y * 31 + 5, 30, 30);
+				} else {
+					cvs.fillStyle = "#DCDCA7";
+					cvs.fillRect(tou.x * 31 + 1, tou.y * 31 + 1, 40, 40);
+				}
+				//画身体
+				for(var i = 0; i < st.length; i++) {
+					if(i % 2) cvs.fillStyle = "#B49969";
+					else cvs.fillStyle = "#B47069";
+					cvs.fillRect(st[i].x * 31 + 7, st[i].y * 31 + 7, 26, 26);
+				}
+				//画食物
+				cvs.fillStyle = "#EEF457";
+				cvs.fillRect(shiwu.x * 31 + 4, shiwu.y * 31 + 4, 32, 32);
+			}
+			//移动
+			function run() {
+				//身体移动
+				for(var i = st.length - 1; i >= 0; i--) {
+					if(i == 0) {
+						st[i].x = tou.x;
+						st[i].y = tou.y;
+						break;
+					}
+					st[i].x = st[i - 1].x;
+					st[i].y = st[i - 1].y;
+				}
+				//头移动
+				tou.fx = touFx;//这个是同步方向，用来解决瞬间换两下方向直接撞死的问题
+				if(tou.fx == "left") {
+					tou.x--;
+				} else if(tou.fx == "bottom") {
+					tou.y++;
+				} else if(tou.fx == "top") {
+					tou.y--;
+				} else if(tou.fx == "right") {
+					tou.x++;
+				}
+
+				//如果死亡
+				if(tou.x < 0 || tou.x >= 20 || tou.y < 0 || tou.y >= 20) gameOver("与其苟活于世不如直接撞死！！！");
+				for(var i = 0; i < st.length; i++) {
+					if(tou.x == st[i].x && tou.y == st[i].y) gameOver("没想到我英明一世却死在自己身上...");
+				}
+				//死亡
+				function gameOver(value) {
+					clearInterval(timer);
+					document.querySelector("canvas").style.background = "#f00";
+					alert(value);
+					zt = null;
+				}
+
+				//吃食物
+				if(shiwu.x == tou.x && shiwu.y == tou.y) {
+					fUp(); //分数++
+					hz(true); //画，true代表吃了食物
+					//给蛇添加一节，因为画完之后才添加所以没有画出来，下次会先移动后画
+					var s = {
+						x: 0,
+						y: 0
+					};
+					st.push(s);
+					//用来确定食物不会出到蛇身上
+					var b = false;
+					while(!b) {
+						b = true;
+						shiwu.x = parseInt(Math.random() * 20);
+						shiwu.y = parseInt(Math.random() * 20);
+						for(var i = 0; i < st.length; i++) {
+							if(shiwu.x == st[i].x && shiwu.y == st[i].y) {
+								b = false;
+							}
+						}
+						if(shiwu.x == tou.x && shiwu.y == tou.y) b = false;
+					}
+					//吃的过程中速度自动增长
+					if(shudu<=0.5) return;
+					shudu-=0.005;
+					clearInterval(timer);
+					timer = setInterval(run, getNd());
+					return;
+				}
+				//如果没有吃食物（吃了就return了）false代表没有吃食物
+				hz(false);
+			}
+			//空格执行的事件
+			function stop() {
+				//初始化（第一次开始或者死亡后开始）
+				if(zt == null) {
+					st = [];
+					tou = {
+						x: 0,
+						y: 10,
+						fx: "right"
+					}
+					touFx = "right";
+					shiwu = {
+						x: 10,
+						y: 10
+					};
+					zt = true;
+					timer = setInterval(run, getNd());
+					f = 0;
+				}
+				//暂停		
+				else if(zt == true) {
+					clearInterval(timer);
+					zt = false;
+					document.querySelector("canvas").style.background = "#CB8BEC";
+				}
+				//暂停后开始
+				else {
+					timer = setInterval(run, getNd());
+					zt = true;
+					document.querySelector("canvas").style.background = "#fff";
+				}
+			}
+			//键盘事件
+			function keydown(event) {
+				//		console.log(event);
+				if(event.code == "ArrowRight") {
+					if(tou.fx == "left") return;
+					touFx = "right";//不是直接改tou.fx，等待timer运行后同步
+				}
+				if(event.code == "ArrowLeft") {
+					if(tou.fx == "right") return;
+					touFx = "left";
+				}
+				if(event.code == "ArrowDown") {
+					if(tou.fx == "top") return;
+					touFx = "bottom";
+				}
+				if(event.code == "ArrowUp") {
+					if(tou.fx == "bottom") return;
+					touFx = "top";
+				}
+				if(event.code == "Space") {
+					stop();
+				}
+			}
+			//分数++
+			function fUp(bool) {
+				f++;
+				var p = document.querySelectorAll(".sidebar h1 p");
+				p[2].innerText = f % 10;
+				p[1].innerText = parseInt(f / 10 % 10);
+				p[0].innerText = parseInt(f / 100 % 10);
+			}
+			//获得难度
+			function getNd(){
+				var s=document.querySelector("input.on").value;
+				if(s=="高")  return 100*shudu;
+				else if(s=="中") return 200*shudu;
+				else return 300*shudu;
+				
+			}
+			///////
+			
+		</script>
+		<style type="text/css">
+			.body {
+				width: 850px;
+				margin: 50px auto 40px;
+			}
+			
+			.sidebar {
+				width: 200px;
+				float: right;
+			}
+			
+			.sidebar h2 {
+				font-size: 28px;
+				color: #6ECCB3;
+			}
+			
+			.sidebar h1 {
+				margin-top: 20px;
+				font-size: 20px;
+				color: #E3DC89;
+				display: flex;
+				align-content: center;
+				justify-content: center;
+				line-height: 50px;
+			}
+			
+			.sidebar h1 p {
+				font-size: 36px;
+				width: 01em;
+				text-align: center;
+				background: #AE8555;
+				margin: 0 4px;
+			}
+			
+			.foot {
+				text-align: center;
+				width: 100%;
+				font-size: 14px;
+				line-height: 30px;
+				color: #050608;
+			}
+			.qb{
+				width: 100%;
+				height: 100%;
+				overflow: hidden;
+				position: absolute;
+				top: 0;
+				left: 0;
+			}
+			.nd{
+				height: 36px;
+				margin-top: 15px;
+				display: flex;
+				justify-content: space-between;
+			}
+			.nd .on{
+				background: #FFE0CC;
+				color: #3B4DD6;
+			}
+			.nd input{
+				margin:0 6px;
+				border-radius:8px ;
+				flex: 1 1 auto;
+				font-size: 22px;
+				color: #fff;
+				background: #3B727E;
+				border: none;
+				outline: none;
+			}
+		</style>
+	</head>
+
+	<body onkeydown="keydown(event)" style="background: #151D27;">
+		<div class="qb">
+			
+		
+		<div class="body">
+			<canvas id="" width="630" height="630" style="padding: 2px; background: #fff;"></canvas>
+			<div class="sidebar">
+				<h2>空格键(手机双击)开始/暂停游戏，上下左右键移动（手机上下左右滑）</h2>
+				<h1><span>分数：</span>
+				<p>0</p>
+				<p>0</p>
+				<p>0</p>
+				</h1>
+				<div class="nd">
+					<input type="button" id="" class="" value="高" />
+					<input type="button" id="" class="" value="中" />
+					<input type="button" id="" class="on" value="低" />
+				</div>
+			</div>
+
+		</div>
+		<div class="foot">
+			作者：天字第一号
+		</div>
+		</div>
+	</body>
+	<script>
+		//手机端滑动事件，电脑端没有效果，代码是网上找的
+		var startx, starty; //获得角度
+		function getAngle(angx, angy) {
+			return Math.atan2(angy, angx) * 180 / Math.PI;
+		};
+		//根据起点终点返回方向 1向上 2向下 3向左 4向右 0未滑动 
+		function getDirection(startx, starty, endx, endy) {
+			var angx = endx - startx;
+			var angy = endy - starty;
+			var result = 0;
+			//如果滑动距离太短 
+			if(Math.abs(angx) < 1 && Math.abs(angy) < 1) {
+				return result;
+			}
+			var angle = getAngle(angx, angy);
+			if(angle >= -135 && angle <= -45) {
+				result = 1;
+			} else if(angle > 45 && angle < 135) {
+				result = 2;
+			} else if((angle >= 135 && angle <= 180) || (angle >= -180 && angle < -135)) {
+				result = 3;
+			} else if(angle >= -45 && angle <= 45) {
+				result = 4;
+			}
+			return result;
+		}
+		//手指接触屏幕
+		document.addEventListener("touchstart", function(e) {
+			startx = e.touches[0].pageX;
+			starty = e.touches[0].pageY;
+		}, false);
+		//手指离开屏幕 
+		document.addEventListener("touchend", function(e) {
+			var endx, endy;
+			endx = e.changedTouches[0].pageX;
+			endy = e.changedTouches[0].pageY;
+			var direction = getDirection(startx, starty, endx, endy);
+					//我只改了这个
+			switch(direction) {
+				case 0:
+					
+					break;
+				case 1:
+					if(tou.fx == "bottom") return;
+					touFx = "top";
+					break;
+				case 2:
+					if(tou.fx == "top") return;
+					touFx = "bottom";
+					break;
+				case 3:
+					if(tou.fx == "right") return;
+					touFx = "left";
+					break;
+				case 4:
+					if(tou.fx == "left") return;
+					touFx = "right";
+					break;
+				default:
+			}
+		}, false);
+	</script>
+
+</html>

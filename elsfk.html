@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<style type="text/css">
+			* {margin: 0;padding: 0;font-family: "微软雅黑";list-style: none;}
+			canvas {margin: 100px auto;background: #A4A478;display: block;}
+			body {background: #0D201F;}
+			.top {width: 211px;overflow: hidden;position: absolute;top: 30px;left: 0;right: 0;margin: auto;color: #275E5B;}
+			.top p span#f {color: #BE514E;/*font-weight: bold;*/font-size: 18px;margin-left: 5px;}
+			.top p span#f+span {float: right;}
+			.bg {position: absolute;width: 211px;height: 421px;margin: auto;top: 100px;left: 0;right: 0;display: block;z-index: 50;/*background: #A1F17A;*/}
+			.bg div {z-index: 60;}
+			.posi {position: absolute;left: 0;top: 0;background: #B3C479;}
+			.col {width: 1px;height: 421px;}
+			.row {width: 211px;height: 1px;min-height: 1px;}
+		</style>
+
+		<script type="text/javascript" charset="utf-8">
+			//   俄罗斯方块
+			var cvs;
+			var dq = [{x: 5,y: -1}];
+			var timer;
+			var dt = [];
+			var bDoubleBottom = false;
+			var gameStop = 2; //0开始，1暂停，2结束    游戏状态
+			for (var i = 0; i < 20; i++) {
+				var arr = [];
+				for (var o = 0; o < 10; o++) {arr[o] = false;}
+				dt.push(arr);
+			}
+
+			window.onload = function() {
+				cvs = document.querySelector("canvas").getContext('2d');
+				cvs.fillStyle = "#1E3C19";
+				cvs.fillRect(0, 0, 211, 421);
+				//h();
+				dq = xingzhuang(dq);
+			}
+
+			function h() {
+				cvs.fillStyle = "#A4A478";
+				cvs.fillRect(0, 0, 211, 421);
+				//console.log(dq);
+				//画当前方块
+				for (var i = 0; i < dq.length; i++) {
+					cvs.fillStyle = "#FFFFCC";
+					cvs.fillRect(dq[i]["x"] * 21 + 1, dq[i]["y"] * 21 + 1, 20, 20);
+				}
+				//画已经落下的方块
+				//	console.log(dt)
+				for (var i = 0; i < dt.length; i++) {
+					for (var o = 0; o < dt[0].length; o++) {
+						if (dt[i][o]) {
+							cvs.fillStyle = "#FFFFCC";
+							cvs.fillRect(o * 21 + 1, i * 21 + 1, 20, 20);
+						}
+					}
+				}
+
+			}
+
+			//返回一个随机的方块坐标
+			function xingzhuang(arr) {
+				var zhongxin = arr[0];
+				var b = [
+					[{
+						x: 0,
+						y: 0
+					}, {
+						x: 1,
+						y: 0
+					}, {
+						x: -1,
+						y: 0
+					}, {
+						x: 0,
+						y: -1
+					}],
+					[{
+						x: 0,
+						y: 0
+					}, {
+						x: 1,
+						y: 0
+					}, {
+						x: -1,
+						y: 0
+					}, {
+						x: -1,
+						y: -1
+					}],
+					[{
+						x: 0,
+						y: 0
+					}, {
+						x: 1,
+						y: 0
+					}, {
+						x: -1,
+						y: 0
+					}, {
+						x: 1,
+						y: -1
+					}],
+					[{
+						x: 0,
+						y: 0
+					}, {
+						x: 0,
+						y: 1
+					}, {
+						x: 0,
+						y: -1
+					}, {
+						x: 0,
+						y: -2
+					}],
+					[{
+						x: 0,
+						y: 0
+					}, {
+						x: -1,
+						y: 0
+					}, {
+						x: 0,
+						y: -1
+					}, {
+						x: 1,
+						y: -1
+					}],
+					[{
+						x: 0,
+						y: 0
+					}, {
+						x: 1,
+						y: 0
+					}, {
+						x: 0,
+						y: -1
+					}, {
+						x: -1,
+						y: -1
+					}],
+					[{
+						x: 0,
+						y: 0
+					}, {
+						x: 1,
+						y: 0
+					}, {
+						x: 0,
+						y: -1
+					}, {
+						x: 1,
+						y: -1
+					}],
+					[{
+						x: 0,
+						y: 0
+					}, {
+						x: 1,
+						y: 0
+					}, {
+						x: 0,
+						y: -1
+					}],
+					[{
+						x: 0,
+						y: 0
+					}]
+				];
+				var bI = parseInt(Math.random() * 9);
+				var xz = [];
+				for (var i = 0; i < b[bI].length; i++) {
+					xz[i] = Object.assign({}, zhongxin);
+					xz[i].x += b[bI][i]["x"];
+					xz[i].y += b[bI][i].y;
+				}
+				return xz;
+			}
+			//方块移动
+			//当前方块横向移，
+			function dqColChange(value) {
+				for (var i = 0; i < dq.length; i++) {
+					if (dq[i]["x"] + value > 9 || dq[i]["x"] + value < 0) return;
+					if (dq[i]["y"] < 0) continue;
+					if (dt[(dq[i]["y"])][(dq[i]["x"] + value)]) return;
+				}
+				for (var i = 0; i < dq.length; i++) {
+					dq[i]["x"] += value;
+				}
+				h();
+			}
+			//当前方块下移，
+			function dqRowChange() {
+				var _new = false;
+				//判断是否落下
+				for (var i = 0; i < dq.length; i++) {
+					if (dq[i]["y"] + 1 == 20) {
+						newBlock(); //如果落到最下边（y==19）
+						_new = true;
+						break;
+					}
+					if (dq[i]["y"] < 0) continue;
+					if (dt[(dq[i]["y"] + 1)][(dq[i]["x"])]) { //如果落到曾经落下的位置
+						if (newBlock()) return true;
+						_new = true;
+						break;
+					}
+				}
+
+				for (var i = 0; i < dq.length; i++) {
+					dq[i]["y"]++;
+				}
+				h();
+				return _new;
+			}
+
+			function for_dqRowChange() {
+				while (!dqRowChange()) {
+					//在判断处调用方法
+				}
+			}
+			//当前方块旋转
+			function dqRotate() {
+				var core = dq[0]; //core=中心
+				var dq2 = [];
+				for (var i = 0; i < dq.length; i++) {
+					var a = {
+						x: 0,
+						y: 0
+					};
+					a.x = dq[i].x;
+					a.y = dq[i].y;
+					dq2[i] = a;
+				}
+				//Object.assign(dq2,dq);
+				//	console.log(dq2);
+				//	console.log("dq2："+dq2[0].x+"，"+dq2[0].y+"---"
+				//	+dq2[1].x+"，"+dq2[1].y+"---"
+				//	+dq2[2].x+"，"+dq2[2].y+"---"
+				//	+dq2[3].x+"，"+dq2[3].y)
+				for (var i = 0; i < dq2.length; i++) {
+					var x = dq2[i]["x"] - core.x;
+					var y = dq2[i]["y"] - core.y;
+					dq2[i]["y"] = core.y + x;
+					dq2[i]["x"] = core.x + y * -1;
+					if (dq2[i]["y"] > 19 || dq2[i]["y"] < 0) {
+						console.log("已退出1");
+						return;
+					}
+					if (dq2[i]["x"] > 9 || dq2[i]["x"] < 0) {
+						console.log("已退出2");
+						return;
+					}
+					if (dt[(dq2[i]["y"])][(dq2[i]["x"])]) {
+						console.log("已退出3");
+						return;
+					}
+				}
+				//	console.log(dq2);
+				//	console.log(dq);
+				//	console.log("----");
+				//	for(var i = 0; i < dq2.length; i++){
+				//		dq[i]=dq2[i];
+				//	}
+				for (var i = 0; i < dq.length; i++) {
+					var a = {
+						x: 0,
+						y: 0
+					};
+					a.x = dq2[i].x;
+					a.y = dq2[i].y;
+					dq[i] = a;
+				}
+				h();
+			}
+			//当前方块落下后的判断
+			function newBlock() {
+				//如果创建新方块时旧方块有任何一块在屏幕外（上边）则游戏结束
+				for (var i = 0; i < dq.length; i++) {
+					if (dq[i]["y"] < 0) {
+						GameOver();
+						return true;
+					}
+				}
+				//记录方块落下的坐标
+				for (var i = 0; i < dq.length; i++) {
+					dt[(dq[i]["y"])][(dq[i]["x"])] = true;
+				}
+				clearRow(); //判断并清除一行
+				//新的方块
+				dq = xingzhuang([{
+					x: 5,
+					y: -1
+				}]);
+			}
+			//判断并清除一行
+			function clearRow() {
+				//记录后判断是否可以清除一行
+				var num = 0; //是否清除一行了，如果没有跳过后面
+				for (var i = 0; i < 20; i++) { //i是行，o是行里的每个
+					var _delete = true;
+					for (var o = 0; o < 10; o++) {
+						if (!dt[i][o]) { //如果任何一个=false（没满）就退出
+							_delete = false;
+							break
+						}
+					}
+					//如果可以清除
+					if (_delete) {
+						dt[i] = null; //先设置为null
+						num++;
+					}
+				}
+				if (num == 0) {
+					return;
+				} else FractionUp(num);
+				//清除完交换位置
+				var deleteRow = 0;
+				for (var i = 19; i >= 0; i--) {
+					if (dt[i] == null) {
+						var NoNull = 1;
+						while (dt[i - NoNull] == null) {
+							NoNull++;
+							if (i - NoNull < 0) {
+								break;
+							}
+						}
+						dt[i] = dt[i - NoNull];
+						dt[i - NoNull] = null;
+					}
+				}
+				//交换完把最上边的underfind填充一下
+				for (var i = 0; i < 20; i++) {
+					if (dt[i] != undefined || dt[i] != null) break;
+					var arr = [];
+					for (var o = 0; o < 10; o++) {
+						arr[o] = false;
+					}
+					dt[i] = arr;
+				}
+			}
+			//分数增加
+			function FractionUp(value) {
+				value = value * value;
+				var f = document.getElementById("f");
+				f.innerText = parseInt(f.innerText) + value;
+			}
+			//暂停|游戏结束|开始
+			function stop() {
+				if (gameStop == 0) { //游戏中暂停
+					clearInterval(timer);
+					cvs.fillStyle = "#1E3C19";
+					cvs.fillRect(0, 0, 211, 421);
+					gameStop = 1;
+				} else if (gameStop == 1) { //暂停后开始
+					timer = setInterval(dqRowChange, 300);
+
+					gameStop = 0;
+				} else { //游戏结束后开始
+					timer = setInterval(dqRowChange, 300);
+					dq = [{
+						x: 5,
+						y: -1
+					}];
+					for (var i = 0; i < 20; i++) {
+						for (var o = 0; o < 10; o++) {
+							dt[i][o] = false;
+						}
+					}
+					gameStop = 0;
+				}
+			}
+
+			function GameOver() {
+				clearInterval(timer);
+				cvs.fillStyle = "#DC4747";
+				cvs.fillRect(0, 0, 211, 421);
+				gameStop = 2;
+				alert("游戏结束");
+
+			}
+			//键盘事件
+			function keydown(event) {
+				//		console.log(event);
+				if (event.code == "Space") {
+					stop();
+				}
+				if (gameStop != 0) {
+					return;
+				}
+				if (event.code == "ArrowRight") {
+					dqColChange(1);
+
+				}
+				if (event.code == "ArrowLeft") {
+					dqColChange(-1);
+				}
+				if (event.code == "ArrowDown") {
+					if (bDoubleBottom) {
+						for_dqRowChange();
+						return;
+					}
+					dqRowChange();
+					bDoubleBottom = true;
+					setTimeout(function() {
+						bDoubleBottom = false
+					}, 500)
+				}
+				if (event.code == "ArrowUp") {
+					dqRotate();
+				}
+			}
+		</script>
+	</head>
+
+	<body onkeydown="keydown(event)">
+		<div class="top">
+			<h1>俄罗斯方块</h1>
+			<p>分数: <span id="f">0</span> <span>请按空格键开始</span></p>
+		</div>
+		<canvas id="canvas" width="211" height="421"></canvas>
+		<div class="bg">
+			<div class="posi col" style="left: 0px;"></div>
+			<div class="posi col" style="left: 21px;"></div>
+			<div class="posi col" style="left: 42px;"></div>
+			<div class="posi col" style="left: 63px;"></div>
+			<div class="posi col" style="left: 84px;"></div>
+			<div class="posi col" style="left: 105px;"></div>
+			<div class="posi col" style="left: 126px;"></div>
+			<div class="posi col" style="left: 147px;"></div>
+			<div class="posi col" style="left: 168px;"></div>
+			<div class="posi col" style="left: 189px;"></div>
+			<div class="posi col" style="left: 210px;"></div>
+			<div class="posi row" style="top: 0px;"></div>
+			<div class="posi row" style="top: 21px;"></div>
+			<div class="posi row" style="top: 42px;"></div>
+			<div class="posi row" style="top: 63px;"></div>
+			<div class="posi row" style="top: 84px;"></div>
+			<div class="posi row" style="top: 105px;"></div>
+			<div class="posi row" style="top: 126px;"></div>
+			<div class="posi row" style="top: 147px;"></div>
+			<div class="posi row" style="top: 168px;"></div>
+			<div class="posi row" style="top: 189px;"></div>
+			<div class="posi row" style="top: 210px;"></div>
+			<div class="posi row" style="top: 231px;"></div>
+			<div class="posi row" style="top: 252px;"></div>
+			<div class="posi row" style="top: 273px;"></div>
+			<div class="posi row" style="top: 294px;"></div>
+			<div class="posi row" style="top: 315px;"></div>
+			<div class="posi row" style="top: 336px;"></div>
+			<div class="posi row" style="top: 357px;"></div>
+			<div class="posi row" style="top: 378px;"></div>
+			<div class="posi row" style="top: 399px;"></div>
+			<div class="posi row" style="top: 420px;"></div>
+		</div>
+
+		<!--<script type="text/javascript">
+			//用来画网格   这样也方便调整大小
+			var bg=document.querySelector(".bg");
+			var wid=bg.clientWidth;
+			var hei=bg.clientHeight;
+			for(var i=0; i<=wid; i+=21){
+				var div=document.createElement("div");
+				div.className="posi col";
+				div.style.left=i+"px";
+				
+				bg.appendChild(div);
+				console.log(div);
+			}
+			for(var i=0; i<=hei; i+=21){
+				var div=document.createElement("div");
+				div.className="posi row";
+				div.style.top=i+"px";
+				bg.appendChild(div);
+				console.log(div);
+			}
+		</script>-->
+
+	</body>
+
+</html>
