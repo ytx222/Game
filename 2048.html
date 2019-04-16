@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html  ondblclick="GamesStart()">
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<!--<link rel="stylesheet" type="text/css" href="css/temp.css" />-->
+		<script type="text/javascript">
+			var Game = true;
+			function move(direction) {
+				var container = document.querySelector(".container");
+				var item = container.children;
+				var wz = []; 
+				var fx, fx_reverse;
+				var end; 
+				for(var i = 0; i < item.length; i++) {
+					var obj = function() { var col; var row; var obj; }
+					wz[i] = obj; wz[i]["row"] = item[i].getAttribute("row"); wz[i]["col"] = item[i].getAttribute("col"); wz[i]["obj"] = item[i];
+				}
+				if(direction == "top") { fx = "col"; end = false; } 
+				if(direction == "bottom") { fx = "col"; end = true; }
+				if(direction == "left") { fx = "row"; end = false; }
+				if(direction == "right") { fx = "row"; end = true; }
+				fx_reverse = "row"; if(fx == "row") { fx_reverse = "col"; }
+				var _return = true; 
+				for(var times = 1; times <= 4; times++) { 
+					var arr = []; 
+					for(var o = 0; o < wz.length; o++) { if(wz[o][fx_reverse] == times) { arr.push(wz[o]); } }
+					var ky = 1; if(end) ky = 4;
+					function pd(end, p) {
+						if(end) { if(p > 0) return true; return false; }
+						else { if(p <= 4) return true; return false; }
+					}
+					var i_previous = -1;
+					for(var p = ky; pd(end, p); end ? (p--) : (p++)) {
+						for(var i = 0; i < arr.length; i++) {
+							if(arr[i][fx] == p) {
+								if(arr[i_previous] == undefined) ;
+								else if(arr[i].obj.innerText == arr[i_previous].obj.innerText) {
+									end ? (ky++) : (ky--);
+									arr[i].obj.innerText = parseInt(arr[i].obj.innerText) * 2;
+									arr[i_previous].obj.remove();
+									_return = false;
+									if(fx == "row") { arr[i].obj.style.left = ky * 110 - 100 + "px"; arr[i].obj.setAttribute("row", ky); i_previous = i; }
+									else { arr[i].obj.style.top = ky * 110 - 100 + "px"; arr[i].obj.setAttribute("col", ky); i_previous = i; }
+									arr[i].obj.className = "lv_" + arr[i].obj.innerText/2;
+									end ? (ky--) : (ky++);
+									i_previous = undefined;
+									IntegralUp(arr[i].obj.innerText);
+									continue;
+								}
+								if(arr[i][fx] != ky) { 
+									_return = false; 
+									if(fx == "row") { arr[i].obj.style.left = ky * 110 - 100 + "px"; arr[i].obj.setAttribute("row", ky); } 
+									else { arr[i].obj.style.top = ky * 110 - 100 + "px"; arr[i].obj.setAttribute("col", ky); }
+								}
+								i_previous = i;
+								end ? (ky--) : (ky++);
+							}
+						}
+					}
+				}
+				if(_return) return;
+				var div = document.createElement("div");
+				var bool = true;
+				while(bool) {
+					div.setAttribute("col", parseInt(Math.random() * 4 + 1));
+					div.setAttribute("row", parseInt(Math.random() * 4 + 1));
+					bool = false;
+					for(var i = 0; i < wz.length; i++) {
+						if(div.getAttribute("row") == wz[i].obj.getAttribute("row") && div.getAttribute("col") == wz[i].obj.getAttribute("col")) { bool = true; break; }
+					}
+					if(!bool) break;
+				}
+				var ran=Math.random()+Math.random()+Math.random()+Math.random()+Math.random();
+				ran*=0.2;
+				div.innerText = parseInt( ran* 2 + 1)*2;
+				document.querySelector(".container").appendChild(div);
+				div.style.left = div.getAttribute("row") * 110 - 100 + "px";
+				div.style.top = div.getAttribute("col") * 110 - 100 + "px";
+				div.className = "lv_" + div.innerText/2;
+				if(item.length >= 16) {
+					var row = []; var col = [];
+					for(var i = 1; i <= 4; i++) {
+						row.push(getElementByAttr(item, "row", i));
+						col.push(getElementByAttr(item, "col", i));
+					}
+					bool = true;
+					for(var i = 1; i <= 4; i++) {
+						var row = getElementByAttr(item, "row", i);
+						var o_previous = getElementByAttr(row, "col", 1);
+						for(var o = 2; o <= 4; o++) {
+							var p = getElementByAttr(row, "col", o);
+							if(o_previous[0].innerText == p[0].innerText) bool = false;
+							o_previous = p;
+						}
+						var col = getElementByAttr(item, "col", i);
+						var o_previous = getElementByAttr(col, "row", 1);
+						for(var o = 2; o <= 4; o++) {
+							var p = getElementByAttr(col, "row", o);
+							if(o_previous[0].innerText == p[0].innerText) bool = false;
+							o_previous = p;
+						}
+					}
+					if(bool) GamesOver();
+				}
+			}
+
+			function getElementByAttr(item, attr, value) {
+				var aEle = [];
+				for(var i = 0; i < item.length; i++) {
+					if(item[i].getAttribute(attr) == value)
+						aEle.push(item[i]);
+				}
+				return aEle;
+			}
+			function GamesOver() {
+				Game = false;
+				document.querySelector(".alert").style.display = "block";
+				document.querySelector("h1").style.display = "block";
+				document.querySelector("h1").innerText = document.querySelector(".cur span+span").innerText;
+			}
+			function GamesStart() {
+				if(document.querySelectorAll(".container div").length==0){}
+				else{ if(Game) return;}
+				document.querySelector(".alert").style.display = "none";
+				document.querySelector("h1").style.display = "none";
+				var container = document.querySelector(".container");
+				var divs = container.children;
+				console.log(divs);
+				for(var i = divs.length - 1; i >= 0; i--) {
+					console.log(divs[i]);
+					container.removeChild(divs[i]);
+
+				}
+				var f = document.querySelector(".Integral");
+				var cur = f.children[2].children[1];
+				cur.innerText = "0";
+				var div = document.createElement("div");
+				div.setAttribute("col", 1);
+				div.setAttribute("row", 1);
+				div.style.left = "10px";
+				div.style.top = "10px";
+				div.innerText = "2";
+				div.className = "lv_1";
+				container.appendChild(div);
+				Game=true;
+			}
+			function IntegralUp(value) {
+				value = parseInt(value);
+				var f = document.querySelector(".Integral");
+				var max = f.children[1].children[1];
+				var cur = f.children[2].children[1];
+				cur.innerText = parseInt(cur.innerText + "") + value;
+				if(parseInt(cur.innerText) > parseInt(max.innerText)) max.innerText = cur.innerText;
+			}
+			function remove_lv(value) {
+				var div = document.querySelectorAll(".lv_" + value);
+				for(var i = div.length - 1; i >= 0; i--) {
+					div[i].remove();
+				}
+			}
+			function remove_XY(x, y) {
+				var item = document.querySelectorAll(".container div");
+				var row = getElementByAttr(item, "row", x);
+				var col = getElementByAttr(row, "col", y);
+				col.remove();
+			}
+			function remove_lv_2_4_8_16() {
+				var div = document.querySelectorAll(".lv_1,.lv_2,.lv_4,.lv_8");
+				for(var i = div.length - 1; i >= 1; i--) {
+					div[i].remove();
+				}
+			}
+			function KeyEvent(e) {
+				//console.log(e);
+				if(e.shiftKey && e.code == "Delete") {
+					remove_lv_2_4_8_16();
+				}
+				if(e.code == "Space") {
+					GamesStart();
+				}
+				if(!Game) return;
+				if(e.code == "ArrowUp") {
+					move("top");
+				}
+				if(e.code == "ArrowDown") {
+					move("bottom");
+				}
+				if(e.code == "ArrowLeft") {
+					move("left");
+				}
+				if(e.code == "ArrowRight") {
+					move("right");
+				}
+				
+			}
+		</script>
+		<style type="text/css">	
+			*{ margin: 0; padding: 0; font-family: "微软雅黑"; list-style: none;  }
+			body{overflow: hidden;}
+			.f{width: 2em !important;font-size: 30px;flex: 0 0 auto !important;background: none !important;}
+			.Integral{ position: absolute; right: 0; top: -60px; height: 50px; font-size: 20px; color: #A96E3E; display: flex; line-height: 50px; width: 450px; }
+			.Integral p{ flex: 1 1 auto; margin: 0 8px; background: #D2E5EC; border-radius:5px ; width: 5em; }
+			.Integral p span:first-child{ padding: 0 5px; }
+			.alert{ position: absolute; top: 0; left: 0; width: 450px; height: 450px; background: #D0D0D0; opacity: 0.66; z-index: 998; border-radius:5px ; display: flex; flex: 0 0 auto; }
+			h1{ background: #153B26; border-radius:10px ; padding: 10px; font-size: 50px; position: absolute; top: 0; bottom: 0; left: 0; right: 0; margin: 100px auto; text-align: center; height: 1em; line-height: 1em; opacity: 2; width: 4em; z-index: 999; color: #D8C818; }
+			.main{width: 450px; height: 450px; margin: 20% auto;position: relative;}
+			.main .bg{ width: 430px; height: 430px; border: 10px solid #D3C294; background: #D3C294; border-radius:10px ; position: relative;  }
+			.main .bg div{width: 100px; height: 100px; margin-left:10px ;background: #CCF7FF;border-radius:5px ;float: left;}
+			.main .bg div:nth-child(n+5){margin-top: 10px;}
+			.main .bg div:nth-child(4n+1){margin-left: 0;}
+			.main .container{ width: 450px; height: 450px; position: absolute; top: 0; left: 0;  }
+			.main .container div{ width: 100px; height: 100px; border-radius: 5px; position: absolute; }
+			
+			.main .container div{ text-align: center; line-height: 100px; transition: 200ms; }
+			.lv_1{ background: #E2E2E2; /*灰*/ }
+			.lv_2{ background: #9DA983;  /*浅色-*/}
+			.lv_4{  background: #E4C2D2; /*浅色-*/}
+			.lv_8{  background: #7996C2;  /*有点深的颜色-*/}
+			.lv_16{ background: #273542;  /*灰蓝-*/}
+			.lv_32{ background: #D2994C;  /*琥珀色-*/}
+			.lv_64{ background: #017666; /*绿*/ }
+			.lv_128{ background: #FDEE71;  /*黄*/}
+			.lv_256{ background: #343233; /*深灰-*/}
+			.lv_512{ background: #065C8B;  /*蓝*/}
+			.lv_1024{ background: #D63449;  /*红-*/ }
+			.lv_2048{ background: #E31E15;  /*红-*/}
+			.lv_4096{ background: #370508;  /*玄色-*/}
+			.lv_8192{ background: #FFED42;  /*黄-*/}
+			.lv_16384{/*应该没用*/ background: #75BBDD; /*蓝-*/ }
+			
+			.lv_1,.lv_2,.lv_4,.lv_8{color: #666666;font-size: 60px;}
+			.lv_16, .lv_32, .lv_64{color: #5AE4D5;font-size: 50px;}
+			.lv_128, .lv_256, .lv_512{ color: #B84C4C; font-size: 40px;}
+			.lv_1024, .lv_2048, .lv_4096, .lv_8192{ color: #695631; font-size: 30px;}
+			
+			.foot{ margin: auto; position: absolute; bottom: -60px; left: 0; right: 0; text-align: center; color: #E6E6E6; }
+
+		</style>
+	</head>
+
+	<body onkeydown="KeyEvent(event)">
+
+		<div class="main">
+			<div class="Integral">
+				<p class="f">分数</p>
+				<p class="max"><span>最高：</span><span>0</span></p>
+				<p class="cur"><span>当前：</span><span>0</span></p>
+			</div>
+			<div class="alert" style="display: none;"></div>
+			<h1 style="display: none;">0000</h1>
+			<div class="bg">
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+			</div>
+			<div class="container">
+				<div row="1" col="1" style="top: 10px;left: 10px;" class="lv_1">
+					2
+				</div>
+
+			</div>
+			<div class="foot"  ondblclick="remove_lv_1248()">作者:天字第一号</div>
+		</div>
+	</body>
+	<script>
+		var startx, starty; 
+		function getAngle(angx, angy) {
+			return Math.atan2(angy, angx) * 180 / Math.PI;
+		};
+		function getDirection(startx, starty, endx, endy) {
+			var angx = endx - startx;
+			var angy = endy - starty;
+			var result = 0;
+			if(Math.abs(angx) < 1 && Math.abs(angy) < 1) {
+				return result;
+			}
+			var angle = getAngle(angx, angy);
+			if(angle >= -135 && angle <= -45) {
+				result = 1;
+			} else if(angle > 45 && angle < 135) {
+				result = 2;
+			} else if((angle >= 135 && angle <= 180) || (angle >= -180 && angle < -135)) {
+				result = 3;
+			} else if(angle >= -45 && angle <= 45) {
+				result = 4;
+			}
+			return result;
+		}
+		document.addEventListener("touchstart", function(e) {
+			startx = e.touches[0].pageX;
+			starty = e.touches[0].pageY;
+		}, false);
+		document.addEventListener("touchend", function(e) {
+			var endx, endy;
+			endx = e.changedTouches[0].pageX;
+			endy = e.changedTouches[0].pageY;
+			var direction = getDirection(startx, starty, endx, endy);
+			switch(direction) {
+				case 0:  break; case :
+				case 1: move("top"); break; case :
+				case 2: move("bottom"); break;
+				case 3: move("left"); break;
+				case 4: move("right"); break;
+				default:
+			}
+		}, false);
+	</script>
+</html>
